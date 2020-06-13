@@ -13,7 +13,8 @@ module.exports = {
             table.dateTime('password_reset_date');
             table.integer('request_password_change').defaultTo(0);
 
-            table.integer('master').defaultTo(0);
+            table.integer('admin').defaultTo(0);
+            table.integer('canDelete').defaultTo(1);
 
             table.integer('active').notNullable().defaultTo(1);
             table.dateTime('createdAt').notNullable().defaultTo(knex.fn.now());

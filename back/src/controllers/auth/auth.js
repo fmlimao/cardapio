@@ -74,6 +74,7 @@ module.exports = async (req, res) => {
 
         const login = {
             id: user.user_id,
+            exp: Math.floor(Date.now() / 1000) + Number(process.env.TOKEN_EXPIRATION_SEC),
         };
 
         const token = jwt.sign(login, process.env.TOKEN_SECRET);

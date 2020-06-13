@@ -47,9 +47,13 @@ module.exports = async (req, res) => {
                 'password_reset_date': knex.fn.now(),
             });
 
-        // todo: Enviar email com link para troca de senha.
+        // TODO: Enviar email com link para troca de senha.
 
         ret.addMessage('Um e-mail foi enviado com o link para troca de senha.');
+        ret.addContent('resetPasswordUrl', {
+            method: 'get',
+            url: `${process.env.APP_HOST}/auth/reset-password/${newPasswordResetHash}`,
+        });
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {
