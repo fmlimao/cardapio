@@ -7,6 +7,12 @@ const JsonReturn = require('./helpers/json-return');
 
 const router = express.Router();
 
+router.get('/', (req, res) => {
+    return res.json({
+        status: 'ok',
+    });
+});
+
 router.use('/auth', require('./controllers/auth'));
 
 router.use(async (req, res, next) => {
@@ -31,11 +37,19 @@ router.use(async (req, res, next) => {
             .select('user_id', 'name', 'email', 'admin')
             .first();
 
+        if (!user) {
+            ret.setCode(401);
+            ret.addMessage('Token inválido.');
+            throw new Error();
+        }
 
+        const exp = Number(process.env.TOKEN_EXPIRATION_SEC);
         const login = {
             id: user.user_id,
-            exp: Math.floor(Date.now() / 1000) + Number(process.env.TOKEN_EXPIRATION_SEC),
         };
+        if (exp) {
+            login.exp = Math.floor(Date.now() / 1000) + Number(process.env.TOKEN_EXPIRATION_SEC);
+        }
 
         const refreshToken = jwt.sign(login, process.env.TOKEN_SECRET);
         ret.addContent('refreshToken', refreshToken);

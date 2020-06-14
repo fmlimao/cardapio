@@ -6,7 +6,8 @@
   "scripts": {
     "migrate": "knex --knexfile knexfile.js migrate:latest",
     "rollback": "knex --knexfile knexfile.js migrate:rollback",
-    "seed": "knex --knexfile knexfile.js seed:run"
+    "seed": "knex --knexfile knexfile.js seed:run",
+    "reset": "npm run rollback && npm run migrate && npm run seed"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "knex": "^0.21.1",
     "moment": "^2.26.0",
     "morgan": "^1.10.0",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "slug": "^3.3.0"
   }
 }

@@ -1,16 +1,32 @@
-// const JsonReturn = require('../../helpers/json-return');
+const knex = require('../../database/connection');
 
-module.exports = (req, res) => {
-    const ret = req.ret;
+module.exports = async (req, res) => {
+    let { draw, start, length, search } = req.query;
 
-//     const products = req.db.get('products')
-//         .filter({
-//             actived: true,
-//         })
-//         .sortBy('name')
-//         .value();
+    draw = draw || 1;
+    start = start || 0;
+    length = length || 5;
 
-//     ret.addContent('products', products);
+    const count = await knex('tenants')
+        .where('deletedAt', null)
+        .countDistinct('tenant_id as total')
+        .first();
 
-    return res.status(ret.getCode()).json(ret.generate());
+    const recordsTotal = count.total;
+    const recordsFiltered = count.total;
+
+    const data = await knex('tenants')
+        .where('deletedAt', null)
+        .offset(start)
+        .limit(length)
+        .select('tenant_id', 'name', 'slug', 'active');
+
+    const ret = {
+        draw,
+        recordsTotal,
+        recordsFiltered,
+        data,
+    };
+
+    return res.status(200).json(ret);
 };

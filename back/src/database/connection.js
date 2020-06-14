@@ -11,6 +11,7 @@ const connection = knex({
         charset: 'utf8',
         dateStrings: true,
     },
+    useNullAsDefault: true,
 });
 
 module.exports = connection;

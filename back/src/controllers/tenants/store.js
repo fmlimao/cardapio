@@ -1,68 +1,59 @@
-const JsonReturn = require('../../helpers/json-return');
-// const { numberFormat } = require('../../../helpers/number-format');
+const knex = require('../../database/connection');
+const slug = require('slug');
 
-module.exports = (req, res) => {
-    const ret = new JsonReturn();
-    ret.addFields(['name', 'description', 'price']);
+module.exports = async (req, res) => {
+    const ret = req.ret;
+    ret.addFields(['name']);
 
     try {
-//         let { name, description, price } = req.body;
-//         let error = false;
+        let { name } = req.body;
+        let error = false;
 
-//         if (!name) {
-//             error = true;
-//             ret.setFieldError('name', true, 'Campo obrigatório.');
-//         }
+        if (!name) name = '';
+        else name = String(name).trim();
 
-//         if (!price) {
-//             error = true;
-//             ret.setFieldError('price', true, 'Campo obrigatório.');
-//         }
+        if (!name) {
+            error = true;
+            ret.setFieldError('name', true, 'Campo obrigatório.');
+        }
 
-//         if (error) {
-//             ret.setCode(400);
-//             ret.addMessage('Verifique todos os campos.');
-//             throw new Error();
-//         }
+        if (error) {
+            ret.setCode(400);
+            ret.addMessage('Verifique todos os campos.');
+            throw new Error();
+        }
 
-//         const productExists = req.db
-//             .get('products')
-//             .find({
-//                 name: name,
-//             })
-//             .value();
+        const tenantExists = await knex('tenants')
+            .where('deletedAt', null)
+            .where('name', name)
+            .first();
 
-//         if (productExists) {
-//             ret.setCode(400);
-//             ret.addMessage('Verifique todos os campos.');
-//             ret.setFieldError('name', true, 'Já existe um produto com este nome.');
-//             throw new Error();
-//         }
+        if (tenantExists) {
+            ret.setCode(400);
+            ret.addMessage('Verifique todos os campos.');
+            ret.setFieldError('name', true, 'Já existe um inquilino cadastrado com esse nome.');
+            throw new Error();
+        }
 
-//         const productId = req.shortid.generate();
+        const slugName = slug(name);
 
-//         req.db.get('products')
-//             .push({
-//                 id: productId,
-//                 name,
-//                 description,
-//                 price: price,
-//                 priceFormatted: numberFormat(price, 2, ',', '.'),
-//                 actived: true,
-//             })
-//             .write();
+        const tenant_id = await knex('tenants')
+            .returning('tenant_id')
+            .insert({
+                name,
+                slug: slugName,
+                active: 0,
+            });
 
-//         const product = req.db
-//             .get('products')
-//             .find({
-//                 id: productId,
-//             })
-//             .value();
+        const insertedTenant = await knex('tenants')
+            .where('tenant_id', tenant_id)
+            .select('tenant_id', 'name', 'slug', 'active')
+            .first();
 
-//         ret.addContent('product', product);
+        ret.addContent('tenant', insertedTenant);
 
         ret.setCode(201);
-        ret.addMessage('Produto adicionado com sucesso.');
+        ret.addMessage('Inquilino adicionado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

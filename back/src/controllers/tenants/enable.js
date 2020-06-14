@@ -1,9 +1,8 @@
 const knex = require('../../database/connection');
-const slug = require('slug');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
-    ret.addFields(['name', 'description', 'price']);
+    ret.addFields(['enable']);
 
     try {
         const { tenantId } = req.params;
@@ -19,15 +18,18 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        let { name } = req.body;
+        let { enable } = req.body;
         let error = false;
 
-        if (!name) name = '';
-        else name = String(name).trim();
-
-        if (!name) {
+        if (typeof enable == 'undefined') {
             error = true;
-            ret.setFieldError('name', true, 'Campo obrigatório.');
+            ret.setFieldError('enable', true, 'Campo obrigatório.');
+        } else {
+            enable = Number(enable);
+            if (enable !== 0 && enable !== 1) {
+                error = true;
+                ret.setFieldError('enable', true, 'Este campo precisa ser "0" ou "1".');
+            }
         }
 
         if (error) {
@@ -36,26 +38,10 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        const tenantExists = await knex('tenants')
-            .where('deletedAt', null)
-            .where('name', name)
-            .where('tenant_id', '!=', tenantId)
-            .first();
-
-        if (tenantExists) {
-            ret.setCode(400);
-            ret.addMessage('Verifique todos os campos.');
-            ret.setFieldError('name', true, 'Já existe um inquilino cadastrado com esse nome.');
-            throw new Error();
-        }
-
-        const slugName = slug(name);
-
         await knex('tenants')
             .where('tenant_id', tenantId)
             .update({
-                name,
-                slug: slugName,
+                active: Number(enable),
             });
 
         const updatedTenant = await knex('tenants')

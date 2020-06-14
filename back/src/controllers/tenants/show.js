@@ -4,27 +4,21 @@ module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        const { tenantId } = req.params;
+        let { tenantId } = req.params;
 
-        const currentTenant = await knex('tenants')
+        const tenant = await knex('tenants')
             .where('deletedAt', null)
             .where('tenant_id', tenantId)
+            .select('tenant_id', 'name', 'slug', 'active')
             .first();
 
-        if (!currentTenant) {
+        if (!tenant) {
             ret.setCode(404);
             ret.addMessage('Inquilino não encontrado.');
             throw new Error();
         }
 
-        await knex('tenants')
-            .where('tenant_id', tenantId)
-            .update({
-                deletedAt: knex.fn.now(),
-            });
-
-        // ret.setCode(204);
-        ret.addMessage('Inquilino removido com sucesso.');
+        ret.addContent('tenant', tenant);
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {
