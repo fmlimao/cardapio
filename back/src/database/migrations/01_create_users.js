@@ -13,6 +13,7 @@ module.exports = {
             table.dateTime('password_reset_date');
             table.integer('request_password_change').defaultTo(0);
 
+            table.integer('sysadmin').defaultTo(0);
             table.integer('admin').defaultTo(0);
             table.integer('canDelete').defaultTo(1);
 

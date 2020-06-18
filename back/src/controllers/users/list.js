@@ -7,34 +7,37 @@ module.exports = async (req, res) => {
         return res.status(400).json(validation.errors);
     }
 
-    const count = await knex('tenants')
+    const count = await knex('users')
         .where('deletedAt', null)
-        .countDistinct('tenant_id as total')
+        .where('sysadmin', 1)
+        .countDistinct('user_id as total')
         .first();
 
-    const countFiltered = await knex('tenants')
+    const countFiltered = await knex('users')
         .where(builder => {
             builder.where('deletedAt', null);
+            builder.where('sysadmin', 1);
             if (search.value) {
                 builder.where('name', 'like', `%${search.value}%`)
             }
         })
-        .countDistinct('tenant_id as total')
+        .countDistinct('user_id as total')
         .first();
 
     const recordsTotal = count.total;
     const recordsFiltered = countFiltered.total;
 
-    const data = await knex('tenants')
+    const data = await knex('users')
         .where(builder => {
             builder.where('deletedAt', null);
+            builder.where('sysadmin', 1);
             if (search.value) {
-                builder.where('name', 'like', `%${search.value}%`)
+                builder.where('name', 'like', `%${search.value}%`);
             }
         })
         .offset(start)
         .limit(length)
-        .select('tenant_id', 'name', 'slug', 'active');
+        .select('user_id', 'name', 'email', 'sysadmin', 'admin', 'active');
 
     const ret = {
         draw,
