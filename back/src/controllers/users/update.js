@@ -9,6 +9,20 @@ module.exports = async (req, res) => {
     ret.addFields(['name', 'email', 'password']);
 
     try {
+        const { userId } = req.params;
+
+        const currentUser = await knex('users')
+            .where('deletedAt', null)
+            .where('sysadmin', 1)
+            .where('user_id', userId)
+            .first();
+
+        if (!currentUser) {
+            ret.setCode(404);
+            ret.addMessage('Usuário não encontrado.');
+            throw new Error();
+        }
+
         let { name, email, password } = req.body;
 
         if (typeof name === 'undefined') name = '';
@@ -26,9 +40,9 @@ module.exports = async (req, res) => {
         };
 
         const datatableValidation = new Validator(data, {
-            name: 'required|string|min:3',
-            email: 'required|string|email',
-            password: 'required|string|min:6',
+            name: 'string|min:3',
+            email: 'string|email',
+            password: 'string|min:6',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -52,6 +66,7 @@ module.exports = async (req, res) => {
         const usersExists = await knex('users')
             .where('deletedAt', null)
             .where('email', email)
+            .where('user_id', '!=', userId)
             .first();
 
         if (usersExists) {
@@ -61,31 +76,52 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        const saltLength = Number(process.env.AUTH_SALT_LENGTH);
-        const salt = bcrypt.genSaltSync(saltLength);
-        password = bcrypt.hashSync(password, salt);
+        let saltLength = '';
+        let salt = '';
+        if (password) {
+            saltLength = Number(process.env.AUTH_SALT_LENGTH);
+            salt = bcrypt.genSaltSync(saltLength);
+            password = bcrypt.hashSync(password, salt);
+        }
 
-        const userId = (await knex('users')
-            .insert({
-                name: name,
-                email: email,
-                password: password,
-                salt: salt,
-                request_password_change: 0,
-                sysadmin: 1,
-                admin: 1,
-                canDelete: 1,
-            }))[0];
+        const userChanges = {};
+        let hasChange = false;
 
-        const insertedUser = await knex('users')
+        if (name) {
+            hasChange = true;
+            userChanges.name = name;
+        }
+
+        if (email) {
+            hasChange = true;
+            userChanges.email = email;
+        }
+
+        if (password) {
+            hasChange = true;
+            userChanges.password = password;
+            userChanges.salt = salt;
+        }
+
+        if (!hasChange) {
+            ret.setCode(400);
+            ret.addMessage('É necessário alterar alguma informação.');
+            throw new Error();
+        }
+
+        await knex('users')
+            .where('user_id', userId)
+            .update(userChanges);
+
+        const updatedUser = await knex('users')
             .where('user_id', userId)
             .select('user_id', 'name', 'email')
             .first();
 
-        ret.addContent('user', insertedUser);
+        ret.addContent('user', updatedUser);
 
-        ret.setCode(201);
-        ret.addMessage('Usuário adicionado com sucesso.');
+        ret.setCode(200);
+        ret.addMessage('Usuário editado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {
