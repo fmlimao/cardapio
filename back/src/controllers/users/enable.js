@@ -2,11 +2,11 @@ const knex = require('../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
+    ret.addFields(['enable']);
 
     try {
         const currentUser = await knex('users')
             .where('deletedAt', null)
-            .where('sysadmin', 1)
             .where('user_id', req.user.user_id)
             .first();
 
@@ -16,20 +16,41 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        if (!currentUser.canDelete) {
+        let { enable } = req.body;
+        let error = false;
+
+        if (typeof enable == 'undefined') {
+            error = true;
+            ret.setFieldError('enable', true, 'Campo obrigatório.');
+        } else {
+            enable = Number(enable);
+            if (enable !== 0 && enable !== 1) {
+                error = true;
+                ret.setFieldError('enable', true, 'Este campo precisa ser "0" ou "1".');
+            }
+        }
+
+        if (error) {
             ret.setCode(400);
-            ret.addMessage('Este usuário não pode ser removido.');
+            ret.addMessage('Verifique todos os campos.');
             throw new Error();
         }
 
         await knex('users')
             .where('user_id', req.user.user_id)
             .update({
-                deletedAt: knex.fn.now(),
+                active: Number(enable),
             });
 
-        // ret.setCode(204);
-        ret.addMessage('Usuário removido com sucesso.');
+        const updatedUser = await knex('users')
+            .where('user_id', req.user.user_id)
+            .select('user_id', 'name', 'email', 'admin', 'active')
+            .first();
+
+        ret.addContent('user', updatedUser);
+
+        ret.setCode(200);
+        ret.addMessage('Usuário editado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

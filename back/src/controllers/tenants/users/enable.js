@@ -1,14 +1,12 @@
 const Validator = require('validatorjs');
-const messagesValidator = require('../../validators/messages');
-const knex = require('../../database/connection');
+const messagesValidator = require('../../../validators/messages');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
     ret.addFields(['enable']);
 
     try {
-        const tenantId = req.tenant.tenant_id;
-
         let { enable } = req.body;
 
         if (typeof enable === 'undefined') enable = '';
@@ -41,21 +39,21 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        await knex('tenants')
-            .where('tenant_id', tenantId)
+        await knex('users')
+            .where('user_id', req.user.user_id)
             .update({
                 active: Number(enable),
             });
 
-        const updatedTenant = await knex('tenants')
-            .where('tenant_id', tenantId)
-            .select('tenant_id', 'name', 'slug', 'active')
+        const updatedUser = await knex('users')
+            .where('user_id', req.user.user_id)
+            .select('user_id', 'name', 'email', 'admin', 'active')
             .first();
 
-        ret.addContent('tenant', updatedTenant);
+        ret.addContent('user', updatedUser);
 
         ret.setCode(200);
-        ret.addMessage('Inquilino editado com sucesso.');
+        ret.addMessage('Usuário editado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

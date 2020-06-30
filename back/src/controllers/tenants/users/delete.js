@@ -1,4 +1,4 @@
-const knex = require('../../database/connection');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
@@ -6,15 +6,8 @@ module.exports = async (req, res) => {
     try {
         const currentUser = await knex('users')
             .where('deletedAt', null)
-            .where('sysadmin', 1)
             .where('user_id', req.user.user_id)
             .first();
-
-        if (!currentUser) {
-            ret.setCode(404);
-            ret.addMessage('Usuário não encontrado.');
-            throw new Error();
-        }
 
         if (!currentUser.canDelete) {
             ret.setCode(400);

@@ -1,34 +1,25 @@
 require("dotenv-safe").config();
 const Validator = require('validatorjs');
-const messagesValidator = require('../../validators/messages');
-const knex = require('../../database/connection');
-const bcrypt = require('bcrypt');
+const messagesValidator = require('../../../validators/messages');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
-    ret.addFields(['name', 'email', 'password']);
+    ret.addFields(['name']);
 
     try {
-        let { name, email, password } = req.body;
+        let { name } = req.body;
 
         if (typeof name === 'undefined') name = '';
-        if (typeof email === 'undefined') email = '';
-        if (typeof password === 'undefined') password = '';
 
         name = String(name).trim();
-        email = String(email).trim();
-        password = String(password).trim();
 
         const data = {
             name,
-            email,
-            password,
         };
 
         const datatableValidation = new Validator(data, {
             name: 'string|min:3',
-            email: 'string|email',
-            password: 'string|min:6',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -49,44 +40,26 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        const usersExists = await knex('users')
+        const categoryExists = await knex('categories')
             .where('deletedAt', null)
-            .where('email', email)
-            .where('user_id', '!=', req.user.user_id)
+            .where('tenant_id', req.tenant.tenant_id)
+            .where('name', name)
+            .where('category_id', '!=', req.category.category_id)
             .first();
 
-        if (usersExists) {
+        if (categoryExists) {
             ret.setCode(400);
             ret.addMessage('Verifique todos os campos.');
-            ret.setFieldError('email', true, 'Já existe um usuário cadastrado com esse e-mail.');
+            ret.setFieldError('name', true, 'Já existe uma categoria cadastrada com esse nome.');
             throw new Error();
         }
 
-        let saltLength = '';
-        let salt = '';
-        if (password) {
-            saltLength = Number(process.env.AUTH_SALT_LENGTH);
-            salt = bcrypt.genSaltSync(saltLength);
-            password = bcrypt.hashSync(password, salt);
-        }
-
-        const userChanges = {};
+        const categoryChanges = {};
         let hasChange = false;
 
         if (name) {
             hasChange = true;
-            userChanges.name = name;
-        }
-
-        if (email) {
-            hasChange = true;
-            userChanges.email = email;
-        }
-
-        if (password) {
-            hasChange = true;
-            userChanges.password = password;
-            userChanges.salt = salt;
+            categoryChanges.name = name;
         }
 
         if (!hasChange) {
@@ -95,19 +68,19 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        await knex('users')
-            .where('user_id', req.user.user_id)
-            .update(userChanges);
+        await knex('categories')
+            .where('category_id', req.category.category_id)
+            .update(categoryChanges);
 
-        const updatedUser = await knex('users')
-            .where('user_id', req.user.user_id)
-            .select('user_id', 'name', 'email', 'admin', 'active')
+        const updatedCategory = await knex('categories')
+            .where('category_id', req.category.category_id)
+            .select('category_id', 'name', 'active')
             .first();
 
-        ret.addContent('user', updatedUser);
+        ret.addContent('category', updatedCategory);
 
         ret.setCode(200);
-        ret.addMessage('Usuário editado com sucesso.');
+        ret.addMessage('Categoria editada com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

@@ -1,10 +1,10 @@
-const knex = require('../../database/connection');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        ret.addContent('tenant', req.tenant);
+        ret.addContent('user', req.user);
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

@@ -2,7 +2,8 @@ require("dotenv-safe").config();
 const express = require('express');
 
 const middlewareAuth = require('./controllers/auth/verify');
-const middlewareSysAdmin = require('./controllers/auth/verify-sysadmin');
+const middlewareAuthSysAdmin = require('./controllers/auth/verify-sysadmin');
+const middlewareAdmin = require('./controllers/auth/verify-admin');
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.use('/auth', require('./controllers/auth'));
 
 router.use(middlewareAuth);
 
-router.use('/tenants', middlewareSysAdmin, require('./controllers/tenants'));
-router.use('/users', middlewareSysAdmin, require('./controllers/users'));
+router.use('/tenants', middlewareAuthSysAdmin, require('./controllers/tenants'));
+router.use('/users', middlewareAuthSysAdmin, require('./controllers/users'));
 
 module.exports = router;

@@ -1,38 +1,59 @@
+const Validator = require('validatorjs');
+const messagesValidator = require('../../validators/messages');
 const knex = require('../../database/connection');
 const slug = require('slug');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
-    ret.addFields(['name', 'description', 'price']);
+    ret.addFields(['name']);
 
     try {
-        const { tenantId } = req.params;
-
-        const currentTenant = await knex('tenants')
-            .where('deletedAt', null)
-            .where('tenant_id', tenantId)
-            .first();
-
-        if (!currentTenant) {
-            ret.setCode(404);
-            ret.addMessage('Inquilino não encontrado.');
-            throw new Error();
-        }
+        const tenantId = req.tenant.tenant_id;
 
         let { name } = req.body;
         let error = false;
 
-        if (!name) name = '';
-        else name = String(name).trim();
+        if (typeof name === 'undefined') name = '';
 
-        if (!name) {
-            error = true;
-            ret.setFieldError('name', true, 'Campo obrigatório.');
-        }
+        name = String(name).trim();
 
-        if (error) {
+        const data = {
+            name,
+        };
+
+        const datatableValidation = new Validator(data, {
+            name: 'string|min:3',
+        }, messagesValidator);
+        const fails = datatableValidation.fails();
+        const errors = datatableValidation.errors.all();
+
+        if (fails) {
+            for (let field in errors) {
+                let messages = errors[field];
+                ret.setFieldError(field, true);
+
+                for (let i in messages) {
+                    let message = messages[i];
+                    ret.addFieldMessage(field, message);
+                }
+            }
+
             ret.setCode(400);
             ret.addMessage('Verifique todos os campos.');
+            throw new Error();
+        }
+
+        const changes = {};
+        let hasChange = false;
+
+        if (name) {
+            hasChange = true;
+            changes.name = name;
+        }
+
+        if (!hasChange) {
+            ret.setCode(400);
+            ret.addMessage('É necessário alterar alguma informação.');
             throw new Error();
         }
 

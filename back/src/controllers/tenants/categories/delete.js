@@ -1,10 +1,18 @@
-const knex = require('../../database/connection');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        ret.addContent('tenant', req.tenant);
+        await knex('categories')
+            .where('tenant_id', req.tenant.tenant_id)
+            .where('category_id', req.category.category_id)
+            .update({
+                deletedAt: knex.fn.now(),
+            });
+
+        // ret.setCode(204);
+        ret.addMessage('Categoria removida com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

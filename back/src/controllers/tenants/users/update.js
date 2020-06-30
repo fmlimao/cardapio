@@ -1,7 +1,7 @@
 require("dotenv-safe").config();
 const Validator = require('validatorjs');
-const messagesValidator = require('../../validators/messages');
-const knex = require('../../database/connection');
+const messagesValidator = require('../../../validators/messages');
+const knex = require('../../../database/connection');
 const bcrypt = require('bcrypt');
 
 module.exports = async (req, res) => {
@@ -26,9 +26,9 @@ module.exports = async (req, res) => {
         };
 
         const datatableValidation = new Validator(data, {
-            name: 'string|min:3',
-            email: 'string|email',
-            password: 'string|min:6',
+            name: 'min:3',
+            email: 'email',
+            password: 'min:6',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
                 }
             }
 
-            ret.setCode(400);
+             ret.setCode(400);
             ret.addMessage('Verifique todos os campos.');
             throw new Error();
         }

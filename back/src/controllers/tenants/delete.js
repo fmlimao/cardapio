@@ -4,18 +4,7 @@ module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        const { tenantId } = req.params;
-
-        const currentTenant = await knex('tenants')
-            .where('deletedAt', null)
-            .where('tenant_id', tenantId)
-            .first();
-
-        if (!currentTenant) {
-            ret.setCode(404);
-            ret.addMessage('Inquilino não encontrado.');
-            throw new Error();
-        }
+        const tenantId = req.tenant.tenant_id;
 
         await knex('tenants')
             .where('tenant_id', tenantId)

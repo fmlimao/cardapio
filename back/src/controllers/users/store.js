@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
 
         const insertedUser = await knex('users')
             .where('user_id', userId)
-            .select('user_id', 'name', 'email')
+            .select('user_id', 'name', 'email', 'admin', 'active')
             .first();
 
         ret.addContent('user', insertedUser);

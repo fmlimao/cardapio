@@ -1,7 +1,7 @@
+require("dotenv-safe").config();
 const Validator = require('validatorjs');
-const messagesValidator = require('../../validators/messages');
-const knex = require('../../database/connection');
-const slug = require('slug');
+const messagesValidator = require('../../../validators/messages');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
@@ -9,7 +9,6 @@ module.exports = async (req, res) => {
 
     try {
         let { name } = req.body;
-        let error = false;
 
         if (typeof name === 'undefined') name = '';
 
@@ -41,37 +40,34 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        const tenantExists = await knex('tenants')
+        const categoriesExists = await knex('categories')
             .where('deletedAt', null)
+            .where('tenant_id', req.tenant.tenant_id)
             .where('name', name)
             .first();
 
-        if (tenantExists) {
+        if (categoriesExists) {
             ret.setCode(400);
             ret.addMessage('Verifique todos os campos.');
-            ret.setFieldError('name', true, 'Já existe um inquilino cadastrado com esse nome.');
+            ret.setFieldError('name', true, 'Já existe uma categoria cadastrado com esse nome.');
             throw new Error();
         }
 
-        const slugName = slug(name);
-
-        const tenant_id = await knex('tenants')
-            .returning('tenant_id')
+        const categoryId = (await knex('categories')
             .insert({
-                name,
-                slug: slugName,
-                active: 0,
-            });
+                tenant_id: req.tenant.tenant_id,
+                name: name,
+            }))[0];
 
-        const insertedTenant = await knex('tenants')
-            .where('tenant_id', tenant_id)
-            .select('tenant_id', 'name', 'slug', 'active')
+        const insertedCategory = await knex('categories')
+            .where('category_id', categoryId)
+            .select('category_id', 'name', 'active')
             .first();
 
-        ret.addContent('tenant', insertedTenant);
+        ret.addContent('category', insertedCategory);
 
         ret.setCode(201);
-        ret.addMessage('Inquilino adicionado com sucesso.');
+        ret.addMessage('Categoria adicionada com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

@@ -1,5 +1,5 @@
-const knex = require('../../database/connection');
-const datatableQuery = require('../../validators/datatable-query');
+const knex = require('../../../database/connection');
+const datatableQuery = require('../../../validators/datatable-query');
 
 module.exports = async (req, res) => {
     let { draw, start, length, search, validation } = datatableQuery(req);
@@ -8,34 +8,37 @@ module.exports = async (req, res) => {
         return res.status(400).json(validation.errors);
     }
 
-    const count = await knex('tenants')
+    const count = await knex('categories')
         .where('deletedAt', null)
-        .countDistinct('tenant_id as total')
+        .where('tenant_id', req.tenant.tenant_id)
+        .countDistinct('category_id as total')
         .first();
 
-    const countFiltered = await knex('tenants')
+    const countFiltered = await knex('categories')
         .where(builder => {
             builder.where('deletedAt', null);
+            builder.where('tenant_id', req.tenant.tenant_id);
             if (search.value) {
                 builder.where('name', 'like', `%${search.value}%`)
             }
         })
-        .countDistinct('tenant_id as total')
+        .countDistinct('category_id as total')
         .first();
 
     const recordsTotal = count.total;
     const recordsFiltered = countFiltered.total;
 
-    const data = await knex('tenants')
+    const data = await knex('categories')
         .where(builder => {
             builder.where('deletedAt', null);
+            builder.where('tenant_id', req.tenant.tenant_id);
             if (search.value) {
-                builder.where('name', 'like', `%${search.value}%`)
+                builder.where('name', 'like', `%${search.value}%`);
             }
         })
         .offset(start)
         .limit(length)
-        .select('tenant_id', 'name', 'slug', 'active');
+        .select('category_id', 'name', 'active');
 
     const ret = {
         draw,

@@ -4,22 +4,7 @@ module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        let { userId } = req.params;
-
-        const user = await knex('users')
-            .where('deletedAt', null)
-            .where('sysadmin', 1)
-            .where('user_id', userId)
-            .select('user_id', 'name', 'email')
-            .first();
-
-        if (!user) {
-            ret.setCode(404);
-            ret.addMessage('Usuário não encontrado.');
-            throw new Error();
-        }
-
-        ret.addContent('user', user);
+        ret.addContent('user', req.user);
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

@@ -1,7 +1,8 @@
 const knex = require('../../database/connection');
+const datatableQuery = require('../../validators/datatable-query');
 
 module.exports = async (req, res) => {
-    let { draw, start, length, search, validation } = require('../../validators/datatable-query')(req);
+    let { draw, start, length, search, validation } = datatableQuery(req);
 
     if (validation.fails) {
         return res.status(400).json(validation.errors);

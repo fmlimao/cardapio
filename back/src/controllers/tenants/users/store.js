@@ -1,12 +1,14 @@
 require("dotenv-safe").config();
 const Validator = require('validatorjs');
-const messagesValidator = require('../../validators/messages');
-const knex = require('../../database/connection');
+const messagesValidator = require('../../../validators/messages');
+const knex = require('../../../database/connection');
 const bcrypt = require('bcrypt');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
     ret.addFields(['name', 'email', 'password']);
+
+    const trx = await knex.transaction();
 
     try {
         let { name, email, password } = req.body;
@@ -26,9 +28,9 @@ module.exports = async (req, res) => {
         };
 
         const datatableValidation = new Validator(data, {
-            name: 'string|min:3',
-            email: 'string|email',
-            password: 'string|min:6',
+            name: 'required|string|min:3',
+            email: 'required|string|email',
+            password: 'required|string|min:6',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -52,7 +54,6 @@ module.exports = async (req, res) => {
         const usersExists = await knex('users')
             .where('deletedAt', null)
             .where('email', email)
-            .where('user_id', '!=', req.user.user_id)
             .first();
 
         if (usersExists) {
@@ -62,52 +63,44 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        let saltLength = '';
-        let salt = '';
-        if (password) {
-            saltLength = Number(process.env.AUTH_SALT_LENGTH);
-            salt = bcrypt.genSaltSync(saltLength);
-            password = bcrypt.hashSync(password, salt);
-        }
+        const saltLength = Number(process.env.AUTH_SALT_LENGTH);
+        const salt = bcrypt.genSaltSync(saltLength);
+        password = bcrypt.hashSync(password, salt);
 
-        const userChanges = {};
-        let hasChange = false;
+        const userId = (
+            await trx('users')
+                .insert({
+                    name: name,
+                    email: email,
+                    password: password,
+                    salt: salt,
+                    request_password_change: 0,
+                    sysadmin: 0,
+                    admin: 0,
+                    canDelete: 1,
+                })
+        )[0];
 
-        if (name) {
-            hasChange = true;
-            userChanges.name = name;
-        }
+        const userTenentId = (
+            await trx('tenant_users')
+                .insert({
+                    tenant_id: req.tenant.tenant_id,
+                    user_id: userId,
+                })
+        )[0];
 
-        if (email) {
-            hasChange = true;
-            userChanges.email = email;
-        }
+        await trx.commit();
 
-        if (password) {
-            hasChange = true;
-            userChanges.password = password;
-            userChanges.salt = salt;
-        }
-
-        if (!hasChange) {
-            ret.setCode(400);
-            ret.addMessage('É necessário alterar alguma informação.');
-            throw new Error();
-        }
-
-        await knex('users')
-            .where('user_id', req.user.user_id)
-            .update(userChanges);
-
-        const updatedUser = await knex('users')
-            .where('user_id', req.user.user_id)
+        const insertedUser = await knex('users')
+            .where('user_id', userId)
             .select('user_id', 'name', 'email', 'admin', 'active')
             .first();
 
-        ret.addContent('user', updatedUser);
+        console.log('insertedUser', insertedUser);
+        ret.addContent('user', insertedUser);
 
-        ret.setCode(200);
-        ret.addMessage('Usuário editado com sucesso.');
+        ret.setCode(201);
+        ret.addMessage('Usuário adicionado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {
@@ -120,6 +113,8 @@ module.exports = async (req, res) => {
         if (err.message) {
             ret.addMessage(err.message);
         }
+
+        await trx.rollback();
 
         return res.status(ret.getCode()).json(ret.generate());
     }
