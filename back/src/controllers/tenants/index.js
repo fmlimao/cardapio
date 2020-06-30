@@ -4,6 +4,7 @@ const router = express.Router();
 const verifyTenantExists = require('./verify-exists');
 const verifyUserExists = require('./users/verify-exists');
 const verifyCategoryExists = require('./categories/verify-exists');
+const verifyProductExists = require('./products/verify-exists');
 
 router.get('/', require('./list'));
 router.post('/', require('./store'));
@@ -25,5 +26,12 @@ router.get('/:tenantId/categories/:categoryId', verifyTenantExists, verifyCatego
 router.put('/:tenantId/categories/:categoryId', verifyTenantExists, verifyCategoryExists, require('./categories/update'));
 router.delete('/:tenantId/categories/:categoryId', verifyTenantExists, verifyCategoryExists, require('./categories/delete'));
 router.put('/:tenantId/categories/:categoryId/enable', verifyTenantExists, verifyCategoryExists, require('./categories/enable'));
+
+router.get('/:tenantId/categories/:categoryId/products', verifyTenantExists, verifyCategoryExists, require('./products/list'));
+router.post('/:tenantId/categories/:categoryId/products', verifyTenantExists, verifyCategoryExists, require('./products/store'));
+router.get('/:tenantId/categories/:categoryId/products/:productId', verifyTenantExists, verifyCategoryExists, verifyProductExists, require('./products/show'));
+router.put('/:tenantId/categories/:categoryId/products/:productId', verifyTenantExists, verifyCategoryExists, verifyProductExists, require('./products/update'));
+router.delete('/:tenantId/categories/:categoryId/products/:productId', verifyTenantExists, verifyCategoryExists, verifyProductExists, require('./products/delete'));
+router.put('/:tenantId/categories/:categoryId/products/:productId/enable', verifyTenantExists, verifyCategoryExists, verifyProductExists, require('./products/enable'));
 
 module.exports = router;

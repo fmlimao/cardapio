@@ -4,14 +4,14 @@ module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        await knex('categories')
-            .where('category_id', req.category.category_id)
+        await knex('products')
+            .where('product_id', req.product.product_id)
             .update({
                 deletedAt: knex.fn.now(),
             });
 
         // ret.setCode(204);
-        ret.addMessage('Categoria removida com sucesso.');
+        ret.addMessage('Produto removido com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

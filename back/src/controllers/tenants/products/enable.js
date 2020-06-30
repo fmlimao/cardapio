@@ -39,21 +39,21 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        await knex('categories')
-            .where('category_id', req.category.category_id)
+        await knex('products')
+            .where('product_id', req.product.product_id)
             .update({
                 active: Number(enable),
             });
 
-        const updatedCategory = await knex('categories')
-            .where('category_id', req.category.category_id)
-            .select('category_id', 'name', 'active')
+        const updatedProduct = await knex('products')
+            .where('product_id', req.product.product_id)
+            .select('product_id', 'name', 'description', 'price', 'active')
             .first();
 
-        ret.addContent('category', updatedCategory);
+        ret.addContent('product', updatedProduct);
 
         ret.setCode(200);
-        ret.addMessage('Categoria editada com sucesso.');
+        ret.addMessage('Produto editado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {
