@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         }
 
         const usersExists = await knex('users')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('email', email)
             .first();
 
@@ -70,6 +70,7 @@ module.exports = async (req, res) => {
         const userId = (
             await trx('users')
                 .insert({
+                    tenant_id: req.tenant.tenant_id,
                     name: name,
                     email: email,
                     password: password,
@@ -78,14 +79,6 @@ module.exports = async (req, res) => {
                     sysadmin: 0,
                     admin: 0,
                     canDelete: 1,
-                })
-        )[0];
-
-        const userTenentId = (
-            await trx('tenant_users')
-                .insert({
-                    tenant_id: req.tenant.tenant_id,
-                    user_id: userId,
                 })
         )[0];
 

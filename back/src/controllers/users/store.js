@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
         }
 
         const usersExists = await knex('users')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('email', email)
             .first();
 

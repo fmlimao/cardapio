@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
 
     try {
         const currentUser = await knex('users')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('user_id', req.user.user_id)
             .first();
 
@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
         await knex('users')
             .where('user_id', req.user.user_id)
             .update({
-                deletedAt: knex.fn.now(),
+                deleted_at: knex.fn.now(),
             });
 
         // ret.setCode(204);

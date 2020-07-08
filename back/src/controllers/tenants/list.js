@@ -9,13 +9,13 @@ module.exports = async (req, res) => {
     }
 
     const count = await knex('tenants')
-        .where('deletedAt', null)
+        .where('deleted_at', null)
         .countDistinct('tenant_id as total')
         .first();
 
     const countFiltered = await knex('tenants')
         .where(builder => {
-            builder.where('deletedAt', null);
+            builder.where('deleted_at', null);
             if (search.value) {
                 builder.where('name', 'like', `%${search.value}%`)
             }
@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
 
     const data = await knex('tenants')
         .where(builder => {
-            builder.where('deletedAt', null);
+            builder.where('deleted_at', null);
             if (search.value) {
                 builder.where('name', 'like', `%${search.value}%`)
             }

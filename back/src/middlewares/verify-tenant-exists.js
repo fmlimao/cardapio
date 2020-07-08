@@ -1,4 +1,4 @@
-const knex = require('../../database/connection');
+const knex = require('../database/connection');
 
 module.exports = async (req, res, next) => {
     const ret = req.ret;
@@ -7,7 +7,7 @@ module.exports = async (req, res, next) => {
         let { tenantId } = req.params;
 
         const tenant = await knex('tenants')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('tenant_id', tenantId)
             .select('tenant_id', 'name', 'slug', 'active')
             .first();

@@ -1,13 +1,13 @@
 const jwt = require('jsonwebtoken');
-const knex = require('../../database/connection');
+const knex = require('../database/connection');
 
-const JsonReturn = require('../../helpers/json-return');
+const JsonReturn = require('../helpers/json-return');
 
 module.exports = async (req, res, next) => {
     const ret = new JsonReturn();
 
     try {
-        if (!req.auth.user.admin) {
+        if (!req.auth.user.sysadmin) {
             ret.setCode(401);
             ret.addMessage('Usuário não tem permissão.');
             throw new Error();

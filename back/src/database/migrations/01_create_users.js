@@ -4,6 +4,8 @@ module.exports = {
         return knex.schema.createTable('users', table => {
             table.increments('user_id').primary();
 
+            table.integer('tenant_id');
+
             table.string('name').notNullable();
             table.string('email').notNullable();
             table.string('password').notNullable();
@@ -18,9 +20,9 @@ module.exports = {
             table.integer('canDelete').defaultTo(1);
 
             table.integer('active').notNullable().defaultTo(1);
-            table.dateTime('createdAt').notNullable().defaultTo(knex.fn.now());
-            table.dateTime('updatedAt').notNullable().defaultTo(knex.fn.now());
-            table.dateTime('deletedAt');
+            table.dateTime('created_at').notNullable().defaultTo(knex.fn.now());
+            table.dateTime('updated_at').notNullable().defaultTo(knex.fn.now());
+            table.dateTime('deleted_at');
         });
     },
 

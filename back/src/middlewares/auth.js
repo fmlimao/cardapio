@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
-const knex = require('../../database/connection');
+const knex = require('../database/connection');
 
-const JsonReturn = require('../../helpers/json-return');
+const JsonReturn = require('../helpers/json-return');
 
 module.exports = async (req, res, next) => {
     const ret = new JsonReturn();
@@ -18,11 +18,16 @@ module.exports = async (req, res, next) => {
         var decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
 
         const user = await knex('users')
-            .where('deletedAt', null)
-            .where('active', 1)
-            .where('request_password_change', 0)
-            .where('user_id', decodedToken.id)
-            .select('user_id', 'name', 'email', 'sysadmin', 'admin')
+            .leftJoin('tenants', function () {
+                this.on('users.tenant_id', 'tenants.tenant_id')
+                    .andOnNull('tenants.deleted_at')
+                    .andOn('tenants.active', 1);
+            })
+            .where('users.deleted_at', null)
+            .where('users.active', 1)
+            .where('users.request_password_change', 0)
+            .where('users.user_id', decodedToken.id)
+            .select('users.user_id', 'users.name', 'users.email', 'users.sysadmin', 'users.admin', 'tenants.tenant_id', 'tenants.name as tenants_name', 'tenants.slug as tenants_slug')
             .first();
 
         if (!user) {
@@ -30,12 +35,6 @@ module.exports = async (req, res, next) => {
             ret.addMessage('Token inválido.');
             throw new Error();
         }
-
-        const tenants = await knex('tenants')
-            .join('tenant_users', 'tenants.tenant_id', '=', 'tenant_users.tenant_id')
-            .where('tenants.deletedAt', null)
-            .where('tenant_users.deletedAt', null)
-            .select('tenants.tenant_id', 'tenants.name', 'tenants.slug', 'tenants.active');
 
         const exp = Number(process.env.TOKEN_EXPIRATION_SEC);
         const login = {
@@ -48,12 +47,8 @@ module.exports = async (req, res, next) => {
         const refreshToken = jwt.sign(login, process.env.TOKEN_SECRET);
         ret.addContent('refreshToken', refreshToken);
 
-        // const currentTime = parseInt(Date.now() / 1000);
-        // const timeDiff = decodedToken.exp - currentTime;
-
         req.auth = {
             user,
-            tenants,
         };
         req.ret = ret;
     } catch (err) {

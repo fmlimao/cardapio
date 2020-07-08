@@ -4,21 +4,21 @@ const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
-    ret.addFields(['enable']);
+    ret.addFields(['active']);
 
     try {
-        let { enable } = req.body;
+        let { active } = req.body;
 
-        if (typeof enable === 'undefined') enable = '';
+        if (typeof active === 'undefined') active = '';
 
-        enable = String(enable).trim();
+        active = String(active).trim();
 
         const data = {
-            enable,
+            active,
         };
 
         const datatableValidation = new Validator(data, {
-            enable: 'required|integer|min:0|max:1',
+            active: 'required|integer|min:0|max:1',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -39,21 +39,21 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        await knex('categories')
-            .where('category_id', req.category.category_id)
+        await knex('products')
+            .where('product_id', req.product.product_id)
             .update({
-                active: Number(enable),
+                active: Number(active),
             });
 
-        const updatedCategory = await knex('categories')
-            .where('category_id', req.category.category_id)
-            .select('category_id', 'name', 'active')
+        const updatedProduct = await knex('products')
+            .where('product_id', req.product.product_id)
+            .select('product_id', 'name', 'description', 'price', 'active')
             .first();
 
-        ret.addContent('category', updatedCategory);
+        ret.addContent('product', updatedProduct);
 
         ret.setCode(200);
-        ret.addMessage('Categoria editada com sucesso.');
+        ret.addMessage('Produto editado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

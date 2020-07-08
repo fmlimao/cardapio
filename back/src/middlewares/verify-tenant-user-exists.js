@@ -1,26 +1,25 @@
-const knex = require('../../../database/connection');
+const knex = require('../database/connection');
 
 module.exports = async (req, res, next) => {
     const ret = req.ret;
 
     try {
-        let { productId } = req.params;
+        let { userId } = req.params;
 
-        const product = await knex('products')
-            .where('deletedAt', null)
+        const user = await knex('users')
+            .where('deleted_at', null)
+            .where('user_id', userId)
             .where('tenant_id', req.tenant.tenant_id)
-            .where('category_id', req.category.category_id)
-            .where('product_id', productId)
-            .select('product_id', 'name', 'description', 'price', 'active')
+            .select('user_id', 'name', 'email', 'admin', 'active')
             .first();
 
-        if (!product) {
+        if (!user) {
             ret.setCode(404);
-            ret.addMessage('Produto não encontrado.');
+            ret.addMessage('Usuário não encontrado.');
             throw new Error();
         }
 
-        req.product = product;
+        req.user = user;
     } catch (err) {
         ret.setError(true);
 

@@ -9,9 +9,9 @@ module.exports = {
             table.string('name').notNullable();
 
             table.integer('active').notNullable().defaultTo(1);
-            table.dateTime('createdAt').notNullable().defaultTo(knex.fn.now());
-            table.dateTime('updatedAt').notNullable().defaultTo(knex.fn.now());
-            table.dateTime('deletedAt');
+            table.dateTime('created_at').notNullable().defaultTo(knex.fn.now());
+            table.dateTime('updated_at').notNullable().defaultTo(knex.fn.now());
+            table.dateTime('deleted_at');
         });
     },
 

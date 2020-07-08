@@ -3,17 +3,15 @@ const knex = require('../../database/connection');
 const moment = require('moment');
 const bcrypt = require('bcrypt');
 
-const JsonReturn = require('../../helpers/json-return');
-
 module.exports = async (req, res) => {
-    const ret = new JsonReturn();
+    const ret = req.ret;
     ret.addFields(['password']);
 
     try {
         const { hash } = req.params;
 
         const user = await knex('users')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('active', 1)
             .where('password_reset_hash', hash)
             .first();

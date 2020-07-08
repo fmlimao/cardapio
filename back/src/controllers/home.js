@@ -1,19 +1,8 @@
-const knex = require('../../database/connection');
-
 module.exports = async (req, res) => {
     const ret = req.ret;
 
     try {
-        const tenantId = req.tenant.tenant_id;
-
-        await knex('tenants')
-            .where('tenant_id', tenantId)
-            .update({
-                deleted_at: knex.fn.now(),
-            });
-
-        // ret.setCode(204);
-        ret.addMessage('Inquilino removido com sucesso.');
+        ret.addContent('status', 'ok');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

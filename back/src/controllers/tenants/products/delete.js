@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
         await knex('products')
             .where('product_id', req.product.product_id)
             .update({
-                deletedAt: knex.fn.now(),
+                deleted_at: knex.fn.now(),
             });
 
         // ret.setCode(204);

@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
         }
 
         const tenantExists = await knex('tenants')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('name', name)
             .first();
 

@@ -1,26 +1,24 @@
 const Validator = require('validatorjs');
-const messagesValidator = require('../../validators/messages');
-const knex = require('../../database/connection');
+const messagesValidator = require('../../../validators/messages');
+const knex = require('../../../database/connection');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
-    ret.addFields(['enable']);
+    ret.addFields(['active']);
 
     try {
-        const tenantId = req.tenant.tenant_id;
+        let { active } = req.body;
 
-        let { enable } = req.body;
+        if (typeof active === 'undefined') active = '';
 
-        if (typeof enable === 'undefined') enable = '';
-
-        enable = String(enable).trim();
+        active = String(active).trim();
 
         const data = {
-            enable,
+            active,
         };
 
         const datatableValidation = new Validator(data, {
-            enable: 'required|integer|min:0|max:1',
+            active: 'required|integer|min:0|max:1',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -41,21 +39,21 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        await knex('tenants')
-            .where('tenant_id', tenantId)
+        await knex('categories')
+            .where('category_id', req.category.category_id)
             .update({
-                active: Number(enable),
+                active: Number(active),
             });
 
-        const updatedTenant = await knex('tenants')
-            .where('tenant_id', tenantId)
-            .select('tenant_id', 'name', 'slug', 'active')
+        const updatedCategory = await knex('categories')
+            .where('category_id', req.category.category_id)
+            .select('category_id', 'name', 'active')
             .first();
 
-        ret.addContent('tenant', updatedTenant);
+        ret.addContent('category', updatedCategory);
 
         ret.setCode(200);
-        ret.addMessage('Inquilino editado com sucesso.');
+        ret.addMessage('Categoria editada com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {

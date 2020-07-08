@@ -16,26 +16,12 @@ app.use(logger('dev'));
 app.use(helmet());
 app.use(cookieParser());
 
+// Todas as rotas
 app.use(require('./src/routes'));
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    const ret = new JsonReturn();
-    ret.setError(true);
-    ret.setCode(404);
-    ret.addMessage('Rota não encontrada.');
-    return res.status(ret.getCode()).json(ret.generate());
-});
-
-// error handler
-app.use(function (err, req, res, next) {
-    const ret = new JsonReturn();
-    ret.setError(true);
-    ret.setCode(err.status || 500);
-    ret.addMessage('Erro interno');
-    ret.addMessage(err.message);
-    return res.status(ret.getCode()).json(ret.generate());
-});
+// Mensagens de erro
+app.use(require('./src/middlewares/error-404'));
+app.use(require('./src/middlewares/error-500'));
 
 var server = http.createServer(app);
 server.listen(process.env.APP_PORT, () => {

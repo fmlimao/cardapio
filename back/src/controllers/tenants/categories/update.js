@@ -41,7 +41,7 @@ module.exports = async (req, res) => {
         }
 
         const categoryExists = await knex('categories')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('tenant_id', req.tenant.tenant_id)
             .where('name', name)
             .where('category_id', '!=', req.category.category_id)

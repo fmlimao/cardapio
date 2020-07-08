@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
         }
 
         const productsExists = await knex('products')
-            .where('deletedAt', null)
+            .where('deleted_at', null)
             .where('tenant_id', req.tenant.tenant_id)
             .where('category_id', req.category.category_id)
             .where('name', name)

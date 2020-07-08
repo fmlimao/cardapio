@@ -12,35 +12,32 @@ module.exports = async (req, res) => {
         }
 
         const count = await knex('users')
-            .joinRaw(`inner join tenant_users on users.user_id = tenant_users.user_id and tenant_users.deletedAt is null`)
-            .joinRaw(`inner join tenants on tenant_users.tenant_id = tenants.tenant_id and tenants.deletedAt is null AND tenants.tenant_id = ${req.tenant.tenant_id}`)
-            .where('users.deletedAt', null)
-            .where('users.sysadmin', 0)
-            .countDistinct('users.user_id as total')
+            .where('deleted_at', null)
+            .where('sysadmin', 0)
+            .where('tenant_id', req.tenant.tenant_id)
+            .countDistinct('user_id as total')
             .first();
 
         const countFiltered = await knex('users')
-            .joinRaw(`inner join tenant_users on users.user_id = tenant_users.user_id and tenant_users.deletedAt is null`)
-            .joinRaw(`inner join tenants on tenant_users.tenant_id = tenants.tenant_id and tenants.deletedAt is null AND tenants.tenant_id = ${req.tenant.tenant_id}`)
             .where(builder => {
-                builder.where('users.deletedAt', null);
-                builder.where('users.sysadmin', 0);
+                builder.where('deleted_at', null);
+                builder.where('sysadmin', 0);
+                builder.where('tenant_id', req.tenant.tenant_id);
                 if (search.value) {
-                    builder.where('users.name', 'like', `%${search.value}%`)
+                    builder.where('name', 'like', `%${search.value}%`)
                 }
             })
-            .countDistinct('users.user_id as total')
+            .countDistinct('user_id as total')
             .first();
 
         const recordsTotal = count.total;
         const recordsFiltered = countFiltered.total;
 
         const data = await knex('users')
-            .joinRaw(`inner join tenant_users on users.user_id = tenant_users.user_id and tenant_users.deletedAt is null`)
-            .joinRaw(`inner join tenants on tenant_users.tenant_id = tenants.tenant_id and tenants.deletedAt is null AND tenants.tenant_id = ${req.tenant.tenant_id}`)
             .where(builder => {
-                builder.where('users.deletedAt', null);
+                builder.where('users.deleted_at', null);
                 builder.where('users.sysadmin', 0);
+                builder.where('tenant_id', req.tenant.tenant_id);
                 if (search.value) {
                     builder.where('users.name', 'like', `%${search.value}%`);
                 }

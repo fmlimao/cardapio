@@ -9,14 +9,14 @@ module.exports = async (req, res) => {
     }
 
     const count = await knex('users')
-        .where('deletedAt', null)
+        .where('deleted_at', null)
         .where('sysadmin', 1)
         .countDistinct('user_id as total')
         .first();
 
     const countFiltered = await knex('users')
         .where(builder => {
-            builder.where('deletedAt', null);
+            builder.where('deleted_at', null);
             builder.where('sysadmin', 1);
             if (search.value) {
                 builder.where('name', 'like', `%${search.value}%`)
@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
 
     const data = await knex('users')
         .where(builder => {
-            builder.where('deletedAt', null);
+            builder.where('deleted_at', null);
             builder.where('sysadmin', 1);
             if (search.value) {
                 builder.where('name', 'like', `%${search.value}%`);
