@@ -69,4 +69,7 @@ router.put('/tenants/:tenantId/categories/:categoryId/products/:productId', midd
 router.put('/tenants/:tenantId/categories/:categoryId/products/:productId/active', middlewareAuth, middlewareAuthAdmin, middlewareVerifyTenantExists, middlewareVerifyCategoryExists, middlewareVerifyProductExists, require('./controllers/tenants/products/active'));
 router.delete('/tenants/:tenantId/categories/:categoryId/products/:productId', middlewareAuth, middlewareAuthAdmin, middlewareVerifyTenantExists, middlewareVerifyCategoryExists, middlewareVerifyProductExists, require('./controllers/tenants/products/delete'));
 
+/* Pedidos - Inserir */
+router.post('/orders/:tenantId', middlewareVerifyTenantExists, require('./controllers/orders/store'));
+
 module.exports = router;
