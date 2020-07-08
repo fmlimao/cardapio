@@ -43,6 +43,8 @@ module.exports = async (req, res) => {
         'items': 'required|array',
     };
 
+    const trx = await knex.transaction();
+
     try {
         let { client, payment, comments, items } = req.body;
 
@@ -125,6 +127,8 @@ module.exports = async (req, res) => {
             ret.setFieldError('payment.value', true, 'Campo obrigatório.');
         }
 
+        let final_value = 0;
+        const productsData = [];
         for (let i in items) {
             if (typeof items[i].id !== 'number') items[i].id = '';
 
@@ -137,6 +141,22 @@ module.exports = async (req, res) => {
             if (!productExists) {
                 error = true;
                 ret.setFieldError(`items.${i}.id`, true, 'Produto não encontrado.');
+            } else {
+                let price = Number(productExists.price.toFixed(2));
+                let amount = Number(items[i].amount.toFixed(2));
+                let value = Number(Number(price * amount).toFixed(2));
+                final_value = Number((final_value + value).toFixed(2));
+
+                productsData.push({
+                    product_id: productExists.product_id,
+                    category_id: productExists.category_id,
+
+                    name: productExists.name,
+                    description: productExists.description,
+                    price: productExists.price,
+                    amount: amount,
+                    final_value: value,
+                });
             }
         }
 
@@ -146,41 +166,54 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
+        if (payment.type == 2 && payment.diff == 1 && payment.value < final_value) {
+            error = true;
+            ret.setFieldError('payment.value', true, 'Valor menor do que o valor do pedido.');
+            ret.setCode(400);
+            ret.addMessage('Verifique todos os campos.');
+            throw new Error();
+        }
 
+        const orderData = {
+            tenant_id: req.tenant.tenant_id,
 
+            comments: comments,
+            final_value: final_value,
 
+            client_name: client.name,
+            client_phone: client.phone,
+            client_cep: client.cep,
+            client_address: client.address,
+            client_number: client.number,
+            client_complement: client.complement,
+            client_neighborhood: client.neighborhood,
+            client_city: client.city,
+            client_state: client.state,
+            client_reference: client.reference,
 
-        // const tenantExists = await knex('tenants')
-        //     .where('deleted_at', null)
-        //     .where('name', name)
-        //     .first();
+            payment_type: payment.type,
+            payment_diff: payment.diff,
+            payment_value: payment.value,
+        };
 
-        // if (tenantExists) {
-        //     ret.setCode(400);
-        //     ret.addMessage('Verifique todos os campos.');
-        //     ret.setFieldError('name', true, 'Já existe um inquilino cadastrado com esse nome.');
-        //     throw new Error();
-        // }
+        const orderId = (
+            await trx('orders')
+                .insert(orderData)
+        )[0];
 
-        // const slugName = slug(name);
+        for (let i in productsData) {
+            productsData[i].order_id = orderId;
+        }
 
-        // const tenant_id = await knex('tenants')
-        //     .returning('tenant_id')
-        //     .insert({
-        //         name,
-        //         slug: slugName,
-        //         active: 0,
-        //     });
+        await trx('order_products')
+            .insert(productsData)
 
-        // const insertedTenant = await knex('tenants')
-        //     .where('tenant_id', tenant_id)
-        //     .select('tenant_id', 'name', 'slug', 'active')
-        //     .first();
+        await trx.commit();
 
-        // ret.addContent('tenant', insertedTenant);
+        ret.addContent('order', orderId);
 
-        // ret.setCode(201);
-        // ret.addMessage('Inquilino adicionado com sucesso.');
+        ret.setCode(201);
+        ret.addMessage('Pedido adicionado com sucesso.');
 
         return res.status(ret.getCode()).json(ret.generate());
     } catch (err) {
@@ -193,6 +226,8 @@ module.exports = async (req, res) => {
         if (err.message) {
             ret.addMessage(err.message);
         }
+
+        await trx.rollback();
 
         return res.status(ret.getCode()).json(ret.generate());
     }
