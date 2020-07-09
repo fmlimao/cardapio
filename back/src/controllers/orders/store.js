@@ -46,6 +46,24 @@ module.exports = async (req, res) => {
     const trx = await knex.transaction();
 
     try {
+        const opened = (await knex.raw(`
+            SELECT business_hour_id
+            FROM business_hours
+            WHERE weekday = WEEKDAY(NOW())
+            AND closed = 0
+            AND NOW() BETWEEN CONCAT(DATE(NOW()), ' ', start_time, ':00') AND IF(
+                    start_time < end_time,
+                    CONCAT(DATE(NOW()), ' ', end_time, ':00'),
+                    CONCAT(DATE(DATE_ADD(NOW(), INTERVAL 1 DAY)), ' ', end_time, ':00')
+                );
+        `))[0];
+
+        if (!opened.length) {
+            ret.setCode(400);
+            ret.addMessage('A loja está fechada no momento.');
+            throw new Error();
+        }
+
         let { client, payment, comments, items } = req.body;
 
         if (typeof client !== 'object') client = {};
@@ -160,14 +178,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        if (error) {
-            ret.setCode(400);
-            ret.addMessage('Verifique todos os campos.');
-            throw new Error();
-        }
-
         if (payment.type == 2 && payment.diff == 1 && payment.value < final_value) {
-            error = true;
             ret.setFieldError('payment.value', true, 'Valor menor do que o valor do pedido.');
             ret.setCode(400);
             ret.addMessage('Verifique todos os campos.');
