@@ -14,6 +14,7 @@ const middlewareAuthAdmin = require('./middlewares/auth-admin');
 /* Middlewares de Verificação */
 const middlewareVerifyUserExists = require('./middlewares/verify-user-exists');
 const middlewareVerifyTenantExists = require('./middlewares/verify-tenant-exists');
+const middlewareVerifyTenantExistsWithSlug = require('./middlewares/verify-tenant-exists-with-slug');
 const middlewareVerifyTenantUserExists = require('./middlewares/verify-tenant-user-exists');
 const middlewareVerifyCategoryExists = require('./middlewares/verify-tenant-category-exists');
 const middlewareVerifyProductExists = require('./middlewares/verify-tenant-category-product-exists');
@@ -70,6 +71,7 @@ router.put('/tenants/:tenantId/categories/:categoryId/products/:productId/active
 router.delete('/tenants/:tenantId/categories/:categoryId/products/:productId', middlewareAuth, middlewareAuthAdmin, middlewareVerifyTenantExists, middlewareVerifyCategoryExists, middlewareVerifyProductExists, require('./controllers/tenants/products/delete'));
 
 /* Pedidos - Inserir */
-router.post('/orders/:tenantId', middlewareVerifyTenantExists, require('./controllers/orders/store'));
+router.post('/site/orders/:tenantSlug', middlewareVerifyTenantExistsWithSlug, require('./controllers/orders/store'));
+router.get('/site/tenants/:tenantSlug', middlewareVerifyTenantExistsWithSlug, require('./controllers/tenants/show'));
 
 module.exports = router;
