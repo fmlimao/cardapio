@@ -10,18 +10,17 @@ const expressLayouts = require('express-ejs-layouts');
 
 const app = express();
 
+app.use('/assets', express.static(path.join(__dirname, './public')));
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './src/views'))
 app.use(expressLayouts);
-app.use(express.static(__dirname + '/public'));
-
+app.set('layout', 'clients/layout');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
 app.use(logger('dev'));
 app.use(helmet());
 app.use(cookieParser());
-
 app.use(require('./src/middlewares/json-return'));
 
 app.get('/', (req, res) => {
@@ -30,15 +29,23 @@ app.get('/', (req, res) => {
 
 app.get('/:tenantSlug', (req, res) => {
     const { tenantSlug } = req.params;
+    console.log('tenantSlug', tenantSlug);
 
     axios.get(process.env.API_HOST + `/site/tenants/${tenantSlug}`)
-        .then(response => {
-            const tenant = response.data.content.tenant
-            // return res.sendFile(__dirname + '/src/views/site-modelo.html');
-            return res.render('site-modelo')
+        .then(ajaxResponse => {
+            const data = ajaxResponse.data;
+            console.log('then', 'data', data);
+
+            const tenant = data.content.tenant;
+
+            return res.render('clients/content', {
+                tenant,
+                timestamp: Date.now(),
+            })
         })
-        .catch(error => {
-            console.log('error.response.data', error.response.data);
+        .catch(ajaxResponse => {
+            const data = ajaxResponse.response.data;
+            console.log('catch', 'data', data);
             return res.sendFile(__dirname + '/src/views/404.html');
         });
 

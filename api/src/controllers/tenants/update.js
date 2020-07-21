@@ -5,24 +5,28 @@ const slug = require('slug');
 
 module.exports = async (req, res) => {
     const ret = req.ret;
-    ret.addFields(['name']);
+    ret.addFields(['name', 'whatsapp']);
 
     try {
         const tenantId = req.tenant.tenant_id;
 
-        let { name } = req.body;
+        let { name, whatsapp } = req.body;
         let error = false;
 
         if (typeof name === 'undefined') name = '';
+        if (typeof whatsapp === 'undefined') whatsapp = '';
 
         name = String(name).trim();
+        whatsapp = String(whatsapp).trim();
 
         const data = {
             name,
+            whatsapp,
         };
 
         const datatableValidation = new Validator(data, {
             name: 'string|min:3',
+            whatsapp: 'string|min:3',
         }, messagesValidator);
         const fails = datatableValidation.fails();
         const errors = datatableValidation.errors.all();
@@ -49,6 +53,12 @@ module.exports = async (req, res) => {
         if (name) {
             hasChange = true;
             changes.name = name;
+            changes.slug = slug(name);
+        }
+
+        if (whatsapp) {
+            hasChange = true;
+            changes.whatsapp = whatsapp;
         }
 
         if (!hasChange) {
@@ -70,18 +80,13 @@ module.exports = async (req, res) => {
             throw new Error();
         }
 
-        const slugName = slug(name);
-
         await knex('tenants')
             .where('tenant_id', tenantId)
-            .update({
-                name,
-                slug: slugName,
-            });
+            .update(changes);
 
         const updatedTenant = await knex('tenants')
             .where('tenant_id', tenantId)
-            .select('tenant_id', 'name', 'slug', 'active')
+            .select('tenant_id', 'name', 'slug', 'whatsapp', 'active')
             .first();
 
         ret.addContent('tenant', updatedTenant);

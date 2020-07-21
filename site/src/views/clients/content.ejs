@@ -1,0 +1,133 @@
+<%- contentFor('body') %>
+<div class="container">
+
+    <h1 class="page-header">
+        {{ tenant.name }}
+    </h1>
+
+    <p class="text-success" v-if="tenant.opened"><small>Aberto</small></p>
+    <p class="text-danger" v-if="!tenant.opened"><small>Fechado no momento</small></p>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">Horário de Funcionamento</div>
+        <table class="table">
+            <tbody>
+                <tr v-for="businessHour in tenant.businessHours">
+                    <td>
+                        {{ businessHour.name }}
+                    </td>
+                    <td>
+                        <p v-for="hour in businessHour.hours">{{ hour }}</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <hr>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">Produtos</div>
+        <div class="panel-body">
+
+            <div v-if="!products.all.length">
+                <div class="alert alert-warning">Nenhum produto cadastrado.</div>
+            </div>
+
+            <div v-else>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Buscar produto ou categorias"
+                        v-model="products.filterString">
+                    <span class="input-group-addon">
+                        <span class="fa fa-search"></span>
+                    </span>
+                </div>
+
+                <br>
+
+                <div class="panel panel-default" v-for="category in categories.filtered">
+                    <div class="panel-heading">{{ category.name }}</div>
+                    <ul class="list-group">
+                        <li class="list-group-item" v-for="product in category.products">
+                            {{ product.product }}
+
+                            <div class="pull-right">
+                                <span>{{ number_format(product.price, 2, ',', '.') }}</span>
+
+                                <button class="btn btn-xs btn-success" @click.prevent="addToCart(product, 1)">
+                                    <span class="fa fa-plus"></span>
+                                </button>
+                            </div>
+                            <div class="clearfix"></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">Carrinho</div>
+        <div class="panel-body" v-if="!cart.items.length">
+            <div class="alert alert-warning">Nenhum produto no carrinho.</div>
+        </div>
+        <table class="table table-border" v-else>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th class="text-right" width="140">Preço Unitário</th>
+                    <th class="text-right" width="140">Quantidade</th>
+                    <th class="text-right" width="140">Preço total</th>
+                    <th class="text-right" width="80"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="product in cart.items">
+                    <td>{{ product.product }}</td>
+                    <td class="text-right">R$ {{ number_format(product.price, 2, ',', '.') }}</td>
+                    <td class="text-right">
+                        <input type="number" class="form-control" v-model="product.amount" style="text-align: right;">
+                    </td>
+                    <td class="text-right">R$ {{ number_format(product.total, 2, ',', '.') }}</td>
+                    <td class="text-right">
+                        <button class="btn btn-xs btn-danger" @click.prevent="addToCart(product, -1)">
+                            <span class="fa fa-trash"></span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Total</th>
+                    <th colspan="2"></th>
+                    <th class="text-right">R$ {{ number_format(cart.total, 2, ',', '.') }}</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+
+<%- contentFor('title') %>
+<%= tenant.name %>
+
+<%- contentFor('styles') %>
+<style>
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+    }
+
+    body {
+        background-color: #ddd;
+    }
+</style>
+
+<%- contentFor('scripts') %>
+<script></script>

@@ -39,7 +39,7 @@ router.put('/users/:userId/active', middlewareAuth, middlewareAuthSysAdmin, midd
 router.delete('/users/:userId', middlewareAuth, middlewareAuthSysAdmin, middlewareVerifyUserExists, require('./controllers/users/delete'));
 
 /* Inquilinos */
-router.post('/tenants', require('./controllers/tenants/store'));
+router.post('/tenants', middlewareAuth, middlewareAuthSysAdmin, require('./controllers/tenants/store'));
 router.get('/tenants', middlewareAuth, middlewareAuthSysAdmin, require('./controllers/tenants/list'));
 router.get('/tenants/:tenantId', middlewareAuth, middlewareAuthSysAdmin, middlewareVerifyTenantExists, require('./controllers/tenants/show'));
 router.put('/tenants/:tenantId', middlewareAuth, middlewareAuthSysAdmin, middlewareVerifyTenantExists, require('./controllers/tenants/update'));

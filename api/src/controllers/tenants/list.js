@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
         })
         .offset(start)
         .limit(length)
-        .select('tenant_id', 'name', 'slug', 'active');
+        .select('tenant_id', 'name', 'slug', 'whatsapp', 'active');
 
     const ret = {
         draw,

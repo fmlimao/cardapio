@@ -4,11 +4,13 @@ const express = require('express');
 const helmet = require('helmet');
 const http = require('http')
 const logger = require('morgan');
+const cors = require('cors');
 
 const JsonReturn = require('./src/helpers/json-return');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

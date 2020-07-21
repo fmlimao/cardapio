@@ -6,6 +6,7 @@ module.exports = {
 
             table.string('name').notNullable();
             table.string('slug').notNullable();
+            table.string('whatsapp').notNullable();
 
             table.integer('active').notNullable().defaultTo(1);
             table.dateTime('created_at').notNullable().defaultTo(knex.fn.now());

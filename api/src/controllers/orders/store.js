@@ -49,14 +49,17 @@ module.exports = async (req, res) => {
         const opened = (await knex.raw(`
             SELECT business_hour_id
             FROM business_hours
-            WHERE weekday = WEEKDAY(NOW())
+            WHERE deleted_at IS NULL
+            AND active = 1
             AND closed = 0
+            AND tenant_id = ?
+            AND weekday = WEEKDAY(NOW())
             AND NOW() BETWEEN CONCAT(DATE(NOW()), ' ', start_time, ':00') AND IF(
                     start_time < end_time,
                     CONCAT(DATE(NOW()), ' ', end_time, ':00'),
                     CONCAT(DATE(DATE_ADD(NOW(), INTERVAL 1 DAY)), ' ', end_time, ':00')
                 );
-        `))[0];
+        `, [req.tenant.tenant_id]))[0];
 
         if (!opened.length) {
             ret.setCode(400);

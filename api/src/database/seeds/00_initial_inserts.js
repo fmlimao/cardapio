@@ -7,6 +7,7 @@ module.exports = {
                 name: 'Modelo',
                 slug: 'modelo',
                 active: 1,
+                whatsapp: '5511987391075',
             },
         ]);
 

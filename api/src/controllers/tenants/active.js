@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
 
         const updatedTenant = await knex('tenants')
             .where('tenant_id', tenantId)
-            .select('tenant_id', 'name', 'slug', 'active')
+            .select('tenant_id', 'name', 'slug', 'whatsapp', 'active')
             .first();
 
         ret.addContent('tenant', updatedTenant);

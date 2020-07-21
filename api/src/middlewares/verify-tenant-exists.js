@@ -9,7 +9,7 @@ module.exports = async (req, res, next) => {
         const tenant = await knex('tenants')
             .where('deleted_at', null)
             .where('tenant_id', tenantId)
-            .select('tenant_id', 'name', 'slug', 'active')
+            .select('tenant_id', 'name', 'slug', 'whatsapp', 'active')
             .first();
 
         if (!tenant) {
